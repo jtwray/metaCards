@@ -1,7 +1,7 @@
 const router = require("express").Router();
 const xrayScrapingLibrary = require("x-ray");
 const XRAY = xrayScrapingLibrary();
-
+let fs = require("fs");
 /**check for req.params.url
     if true--
         -run xray scraper library at the url address
@@ -20,26 +20,36 @@ const XRAY = xrayScrapingLibrary();
 */
 
 router.get("/:id", async (req, res) => {
-  const siteURL = 'http://google.com'
-
+  const siteURL = req.params.id.toString();
+  console.log({ siteURL });
+  console.log(siteURL.toString());
   if (siteURL) {
     try {
-      const scraped = await XRAY(siteURL,'a',[{
-        a:"",
-        href:'@href',
-        css:'@class'
-        
-        // title: "title",
-        // //find the first selector of title and save it as 'title'
-        // text: "a",
-        // //find all the instances of p tag  and store them as 'p'
-        // image: "img@src",
-        // //find the first selector of img look at the src attribute and save that as 'image'
-      }]
-      ).write("results.json");
-      res
-        .status(201)
-        .json({ siteURL: `URL received : ${siteURL}`, results: `${scraped[0]&&Object.entries(scraped)||scraped[0]}` });
+      let count,
+      scraped =XRAY(`${siteURL}`, "a", [
+        {
+          a: "",
+          href: "@href",
+          css: "@class"
+        },
+      ])(function (err, scraped) {
+        // results.filter(function (image) {
+        //   return image.width > 100;
+        // });
+        fs.appendFile(
+          "./results.json",
+          JSON.stringify(`${scraped}here goes the neighborhood`),
+          function (err) {
+            if (err){ throw err;}else{
+            console.log(`Replaced! content with ${scraped.length}`)};
+          }
+        );
+      });
+
+      res.status(201).json({
+        siteURL: `URL received : ${siteURL}`,
+        results: `${scraped || scraped[0]}`,
+      });
     } catch (error) {
       res.status(500).json({ message: "Error creating the action" });
     }
